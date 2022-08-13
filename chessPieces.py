@@ -1,8 +1,6 @@
 '''
 Classes that enable chess within python including piece scoring (Hopefully better than attempt 1!)
 '''
-from ast import Pass
-from logging import raiseExceptions
 from string import ascii_lowercase
 from itertools import product
 
@@ -57,10 +55,14 @@ class chessPiece:
         self._lastMoved=False
 
 
-
     @property
     def currentSquare(self):
         return self._currentSquare
+
+    @currentSquare.setter
+    def currentSquare(self, newSquare):
+        self._currentSquare=newSquare
+    
 
     @property
     def colour(self):
@@ -78,12 +80,15 @@ class chessPiece:
     def totalMoves(self):
         return self._totalmoves
 
-    def setLastMoved(self, val: bool):
-        self._lastMoved=val
 
     @property
     def lastMoved(self):
         return self._lastMoved
+
+    @lastMoved.setter
+    def lastMoved(self, val: bool):
+        self._lastMoved=val
+
 
     def checkBoardState(self, friendlyPieces: list, enemyPieces: list)->None:
         #Let's get a quick scan of everything done here
@@ -119,9 +124,6 @@ class chessPiece:
         verticleMoves=[f"{self._currentSquare[0]}{lY}" for lY in range(1,9)]
         horizontalMoves=[f"{list(self._boardcols.values())[lX]}{self._currentSquare[1]}" for lX in range(1,9)]
         return verticleMoves, horizontalMoves
-
-    def setNewSquare(self, newSquare: str)->None:
-        self._currentSquare=newSquare
 
     def takePiece(self):
         self._isTaken=True
@@ -385,7 +387,7 @@ class pawn(chessPiece):
         super().__init__(colour, startSquare, 1)
         self._pieceType='p'
 
-    def checkLegalMoves(self, proposedStep):
+    def checkMoveLegal(self, proposedStep):
         currentXcoord=self._boardcols[self._currentSquare[0]]
         proposedXcoord=self._boardcols[proposedStep[0]]
 
@@ -403,7 +405,19 @@ class pawn(chessPiece):
             return True
 
         return False
-        
+    
+    def promotePiece(self, promoteType):
+        if int(self._currentSquare[1]) in [1,8]:
+            if promoteType=='Q':
+                return queen(self._colour, self._currentSquare)
+            if promoteType=='N':
+                return knight(self._colour, self._currentSquare)
+            if promoteType=='B':
+                return bishop(self._colour, self._currentSquare)
+            if promoteType=='R':
+                return rook(self._colour, self._currentSquare)
+        else:
+            return self
 
 
     def canDoEnPassant(self, proposedStep):
@@ -418,4 +432,12 @@ class pawn(chessPiece):
                     return True
         return False
 
-                
+    def movePiece(self, proposedStep):
+        '''
+        How does the horsey move
+        '''
+        move = self.checkMoveLegal(proposedStep)
+        if move:
+            self._totalmoves+=1
+            self._currentSquare=proposedStep
+        return move
